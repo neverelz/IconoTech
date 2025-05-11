@@ -26,6 +26,8 @@ def get_fragments(soup):
     
     return fragments
 
+
+
 with open('logs.txt', mode='w', encoding='utf-8') as log_file:
     try:
         for page_num in range(start_page, end_page + 1):
