@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
+import random
 import matplotlib.pyplot as plt
 
 
@@ -81,6 +82,9 @@ class SimpleCNN(nn.Module):
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+print("GPU available:", torch.cuda.is_available())
+
 num_classes = df["label"].nunique()
 model = SimpleCNN(num_classes).to(device)
 
@@ -88,7 +92,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # обучение модельки
-for epoch in range(10):
+for epoch in range(5):
     model.train()
     total_loss = 0
     for images, labels in train_loader:
@@ -118,5 +122,34 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 print(f"Test Accuracy: {100 * correct / total:.2f}%")
+
+model.eval()
+class_names = label_encoder.classes_
+
+# выбираем случайные 5 изображений из тестового набора
+samples = random.sample(range(len(test_dataset)), 5)
+
+plt.figure(figsize=(15, 5))
+for i, idx in enumerate(samples):
+    image, true_label = test_dataset[idx]
+    input_image = image.unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        output = model(input_image)
+        _, predicted_label = torch.max(output, 1)
+
+    true_name = class_names[true_label]
+    predicted_name = class_names[predicted_label.item()]
+
+    image = image.permute(1, 2, 0).cpu().numpy()  # преобразуем для plt.imshow
+
+    plt.subplot(1, 5, i + 1)
+    plt.imshow(image)
+    plt.axis('off')
+    plt.title(f"Истинно: {true_name}\nПредсказано: {predicted_name}", fontsize=9)
+
+plt.tight_layout()
+plt.show()
+
 
 # добавить вывод предиктов
